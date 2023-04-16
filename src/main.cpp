@@ -117,7 +117,7 @@ int main() {
 
     // glfw window creation
     // --------------------
-    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Polje meduza", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -160,10 +160,14 @@ int main() {
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
+    // face culling
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
 
     // build and compile shaders
     // -------------------------
-    Shader lightingShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
+    Shader lightingShader("resources/shaders/model_lighting.vs", "resources/shaders/model_lighting.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
     Shader queenJFShader("resources/shaders/queenJF.vs", "resources/shaders/queenJF.fs");
     Shader seaWeedShader("resources/shaders/blending.vs", "resources/shaders/blending.fs");
@@ -263,12 +267,40 @@ int main() {
     // --------------------------------
     vector<glm::vec3> vegetation
     {
-        glm::vec3(-1.5f, 0.5f, -0.48f),
-        glm::vec3( 1.5f, 0.5f, 0.51f),
-        glm::vec3( 0.0f, 0.5f, 0.7f),
-        glm::vec3(-0.3f, 0.5f, -2.3f),
-        glm::vec3 (0.0f,0.5f,-1.0f)
+        glm::vec3(1.7f, 0.7f, 9.08f),
+        glm::vec3(7.1f, -0.1f, 16.0f),
+        glm::vec3(2.4f, 0.7f, 4.27f),
+        glm::vec3(-10.4f, 0.7f, 10.4f),
+        glm::vec3(-3.0f, 0.5f, 16.2f),
+        glm::vec3(-6.45f, 0.15f, 3.36f),
+        glm::vec3(5.95f, 1.03f, -13.94f),
+        glm::vec3(-5.28f, 0.34f, -8.06f),
+        glm::vec3(0.41f, 0.56f, -15.86f),
+        glm::vec3(8.83f, 0.14f, -23.85f),
+        glm::vec3(16.51f, 0.12f, -13.04f),
+        glm::vec3 (0.0f,0.7f,-1.0f)
     };
+    //rock location
+    vector<glm::vec3> rocks
+    {
+        glm::vec3(0.0f,0.0f,0.0f),
+        glm::vec3(-10.0f,-0.24f,-4.04f),
+        glm::vec3(-4.87f,0.41f,17.05f),
+        glm::vec3(8.02f,-0.31f,12.86f),
+        glm::vec3(-13.22f,0.48f,21.12f),
+        glm::vec3(17.0f,0.4f,-9.95f),
+        glm::vec3(-7.87f,0.23f,-7.37f)
+    };
+
+    //static JF
+    vector<glm::vec3> jf
+    {
+        glm::vec3(-10.2f, 1.7f, 10.4f),
+        glm::vec3(5.95f, 1.83f, -13.94f),
+        glm::vec3(-5.28f, 1.24f, -8.06f),
+        glm::vec3(7.1f, 0.9f, 16.5f)
+    };
+
 
     // shader configuration
     // --------------------
@@ -288,17 +320,8 @@ int main() {
     jellyfish.SetShaderTextureNamePrefix("material.");
     Model rock("resources/objects/rock/Rock.obj");
     rock.SetShaderTextureNamePrefix("material.");
-
-    PointLight& pointLight = programState->pointLight;
-    pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
-    pointLight.ambient = glm::vec3(1.0, 1.0, 1.0);
-    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
-    pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
-
-    pointLight.constant = 1.0f;
-    pointLight.linear = 0.09f;
-    pointLight.quadratic = 0.032f;
-
+    Model wood("resources/objects/wood/WOOD.obj");
+    wood.SetShaderTextureNamePrefix("material.");
 
 
     // draw in wireframe
@@ -325,24 +348,22 @@ int main() {
 
         // don't forget to enable shader before setting uniforms
         lightingShader.use();
-        //pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
-        pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0f);
 
-        /*/ directional light
-        lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-        lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-        lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-        lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
-*/
-        lightingShader.setVec3("pointLight.position", pointLight.position);
-        lightingShader.setVec3("pointLight.ambient", pointLight.ambient);
-        lightingShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        lightingShader.setVec3("pointLight.specular", pointLight.specular);
-        lightingShader.setFloat("pointLight.constant", pointLight.constant);
-        lightingShader.setFloat("pointLight.linear", pointLight.linear);
-        lightingShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+        lightingShader.setVec3("pointLight.position", glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0f));
+        lightingShader.setVec3("pointLight.ambient", glm::vec3(0.6, 0.6, 0.6));
+        lightingShader.setVec3("pointLight.diffuse", glm::vec3(0.6, 0.6, 0.6));
+        lightingShader.setVec3("pointLight.specular", glm::vec3(0.5, 0.5, 0.5));
+        lightingShader.setFloat("pointLight.constant", 1.0f);
+        lightingShader.setFloat("pointLight.linear", 0.09f);
+        lightingShader.setFloat("pointLight.quadratic", 0.001f);
         lightingShader.setVec3("viewPosition", programState->camera.Position);
-        lightingShader.setFloat("material.shininess", 8.0f);
+        lightingShader.setFloat("material.shininess", 32);
+
+        lightingShader.setVec3("dirLight.direction", glm::vec3(0.0f,20.0f,0.0f));
+        lightingShader.setVec3("dirLight.ambient", glm::vec3(0.05));
+        lightingShader.setVec3("dirLight.diffuse", glm::vec3(0.03));
+        lightingShader.setVec3("dirLight.specular", glm::vec3(0.03));
+
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                                 (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
@@ -354,13 +375,10 @@ int main() {
         queenJFShader.setMat4("projection", projection);
         queenJFShader.setMat4("view", view);
 
-        lightingShader.use();
 
         // render the loaded model
+        lightingShader.use();
         glm::mat4 model = glm::mat4(1.0f);
-        //model = glm::translate(model,
-        //                       programState->backpackPosition); // translate it down so it's at the center of the scene
-        //model = glm::scale(model, glm::vec3(programState->backpackScale));    // it's a bit too big for our scene, so scale it down
         model = glm::scale(model,glm::vec3(1.5f));
         lightingShader.setMat4("model", model);
         patrick.Draw(lightingShader);
@@ -371,24 +389,41 @@ int main() {
         lightingShader.setMat4("model", model);
         sand.Draw(lightingShader);
 
+        glDisable(GL_CULL_FACE);
         model = glm::mat4(1.0f);
-        model = glm::translate(model,glm::vec3(0.0f,1.7f,-1.0f));
+        model = glm::scale(model,glm::vec3(0.1f));
+        model = glm::translate(model,glm::vec3(7.0f,2.5f,0.0f));
         lightingShader.setMat4("model", model);
-        rock.Draw(lightingShader);
+        wood.Draw(lightingShader);
+        glEnable(GL_CULL_FACE);
+
+        for (unsigned int i = 0; i < rocks.size(); i++) {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(0.0f,1.5f,0.0f));
+            model = glm::translate(model, rocks[i]);
+            lightingShader.setMat4("model", model);
+            rock.Draw(lightingShader);
+        }
 
         model = glm::mat4(1.0f);
         model = scale(model,glm::vec3(0.3f));
-        //model = glm::rotate(model,glm::radians(90.0f),glm::vec3(0.0f,0.0f,1.0f));
-        //model = glm::rotate(model,glm::radians(20.0f),glm::vec3(0.0f,1.0f,1.0f));
-        model = glm::translate(model,glm::vec3(-5.8*cos(currentFrame),2.9f,2.05*sin(currentFrame)));
+        model = glm::translate(model,glm::vec3(-5.8*cos(currentFrame),7.3f,2.05*sin(currentFrame)));
         lightingShader.setMat4("model", model);
         jellyfish.Draw(lightingShader);
 
         model = glm::mat4(1.0f);
         model = scale(model,glm::vec3(0.3f));
-        model = glm::translate(model,glm::vec3(5.8*cos(currentFrame),4.9f,2.05*sin(currentFrame)));
+        model = glm::translate(model,glm::vec3(5.8*cos(currentFrame),9.9f,4.05*sin(currentFrame)));
         lightingShader.setMat4("model", model);
         jellyfish.Draw(lightingShader);
+
+        for (unsigned int i = 0; i < jf.size(); i++) {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, jf[i]);
+            model = scale(model,glm::vec3(0.3f));
+            lightingShader.setMat4("model", model);
+            jellyfish.Draw(lightingShader);
+        }
 
         queenJFShader.use();
         model = glm::mat4(1.0f);
@@ -398,6 +433,7 @@ int main() {
         jellyfish.Draw(queenJFShader);
 
         // seaweed
+        glDisable(GL_CULL_FACE);
         seaWeedShader.use();
         seaWeedShader.setMat4("projection", projection);
         seaWeedShader.setMat4("view", view);
@@ -406,12 +442,12 @@ int main() {
         for (unsigned int i = 0; i < vegetation.size(); i++)
         {
             model = glm::mat4(1.0f);
-            model = glm::scale(model,glm::vec3(2.0f));
             model = glm::translate(model, vegetation[i]);
+            model = glm::scale(model,glm::vec3(2.0f));
             seaWeedShader.setMat4("model", model);
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
-
+        glEnable(GL_CULL_FACE);
 
         // draw skybox as last
         glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
@@ -514,21 +550,6 @@ void DrawImGui(ProgramState *programState) {
 
 
     {
-        static float f = 0.0f;
-        ImGui::Begin("Hello window");
-        ImGui::Text("Hello text");
-        ImGui::SliderFloat("Float slider", &f, 0.0, 1.0);
-        ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
-        ImGui::DragFloat3("Backpack position", (float*)&programState->backpackPosition);
-        ImGui::DragFloat("Backpack scale", &programState->backpackScale, 0.05, 0.1, 4.0);
-
-        ImGui::DragFloat("pointLight.constant", &programState->pointLight.constant, 0.05, 0.0, 1.0);
-        ImGui::DragFloat("pointLight.linear", &programState->pointLight.linear, 0.05, 0.0, 1.0);
-        ImGui::DragFloat("pointLight.quadratic", &programState->pointLight.quadratic, 0.05, 0.0, 1.0);
-        ImGui::End();
-    }
-
-    {
         ImGui::Begin("Camera info");
         const Camera& c = programState->camera;
         ImGui::Text("Camera position: (%f, %f, %f)", c.Position.x, c.Position.y, c.Position.z);
@@ -545,12 +566,12 @@ void DrawImGui(ProgramState *programState) {
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
         programState->ImGuiEnabled = !programState->ImGuiEnabled;
-        if (programState->ImGuiEnabled) {
-            programState->CameraMouseMovementUpdateEnabled = false;
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        } else {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        }
+        //if (programState->ImGuiEnabled) {
+        //    programState->CameraMouseMovementUpdateEnabled = false;
+        //    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        //} else {
+        //    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        //}
     }
     if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS){
         programState->CameraMouseMovementUpdateEnabled = !programState->CameraMouseMovementUpdateEnabled;
