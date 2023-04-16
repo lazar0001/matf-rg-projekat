@@ -163,8 +163,9 @@ int main() {
 
     // build and compile shaders
     // -------------------------
-    Shader pLightShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
+    Shader lightingShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
+    Shader queenJFShader("resources/shaders/queenJF.vs", "resources/shaders/queenJF.fs");
 
     float skyboxVertices[] = {
             // positions
@@ -237,11 +238,17 @@ int main() {
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
 
+
     // load models
     // -----------
-    //Model ourModel("resources/objects/backpack/backpack.obj");
-    Model ourModel("resources/objects/patrick/patrick.obj");
-    ourModel.SetShaderTextureNamePrefix("material.");
+    Model patrick("resources/objects/patrick/patrick.obj");
+    patrick.SetShaderTextureNamePrefix("material.");
+    Model sand("resources/objects/sand/sand.obj");
+    sand.SetShaderTextureNamePrefix("material.");
+    Model jellyfish("resources/objects/jellyfish/Jellyfish.obj");
+    jellyfish.SetShaderTextureNamePrefix("material.");
+    Model rock("resources/objects/rock/Rock.obj");
+    rock.SetShaderTextureNamePrefix("material.");
 
     PointLight& pointLight = programState->pointLight;
     pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
@@ -278,32 +285,77 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // don't forget to enable shader before setting uniforms
-        pLightShader.use();
+        lightingShader.use();
         //pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
         pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0f);
-        pLightShader.setVec3("pointLight.position", pointLight.position);
-        pLightShader.setVec3("pointLight.ambient", pointLight.ambient);
-        pLightShader.setVec3("pointLight.diffuse", pointLight.diffuse);
-        pLightShader.setVec3("pointLight.specular", pointLight.specular);
-        pLightShader.setFloat("pointLight.constant", pointLight.constant);
-        pLightShader.setFloat("pointLight.linear", pointLight.linear);
-        pLightShader.setFloat("pointLight.quadratic", pointLight.quadratic);
-        pLightShader.setVec3("viewPosition", programState->camera.Position);
-        pLightShader.setFloat("material.shininess", 8.0f);
+
+        /*/ directional light
+        lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+        lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+        lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+        lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+*/
+        lightingShader.setVec3("pointLight.position", pointLight.position);
+        lightingShader.setVec3("pointLight.ambient", pointLight.ambient);
+        lightingShader.setVec3("pointLight.diffuse", pointLight.diffuse);
+        lightingShader.setVec3("pointLight.specular", pointLight.specular);
+        lightingShader.setFloat("pointLight.constant", pointLight.constant);
+        lightingShader.setFloat("pointLight.linear", pointLight.linear);
+        lightingShader.setFloat("pointLight.quadratic", pointLight.quadratic);
+        lightingShader.setVec3("viewPosition", programState->camera.Position);
+        lightingShader.setFloat("material.shininess", 8.0f);
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
                                                 (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = programState->camera.GetViewMatrix();
-        pLightShader.setMat4("projection", projection);
-        pLightShader.setMat4("view", view);
+        lightingShader.setMat4("projection", projection);
+        lightingShader.setMat4("view", view);
+
+        queenJFShader.use();
+        queenJFShader.setMat4("projection", projection);
+        queenJFShader.setMat4("view", view);
+
+        lightingShader.use();
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         //model = glm::translate(model,
         //                       programState->backpackPosition); // translate it down so it's at the center of the scene
         //model = glm::scale(model, glm::vec3(programState->backpackScale));    // it's a bit too big for our scene, so scale it down
-        pLightShader.setMat4("model", model);
-        ourModel.Draw(pLightShader);
+        lightingShader.setMat4("model", model);
+        patrick.Draw(lightingShader);
+
+        model = glm::scale(model,glm::vec3(3.5f));
+        model = glm::translate(model,glm::vec3(0.0f,-0.1f,0.0f));
+        lightingShader.setMat4("model", model);
+        sand.Draw(lightingShader);
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model,glm::vec3(0.0f,1.7f,-1.0f));
+        lightingShader.setMat4("model", model);
+        rock.Draw(lightingShader);
+
+        model = glm::mat4(1.0f);
+        model = scale(model,glm::vec3(0.3f));
+        //model = glm::rotate(model,glm::radians(90.0f),glm::vec3(0.0f,0.0f,1.0f));
+        //model = glm::rotate(model,glm::radians(20.0f),glm::vec3(0.0f,1.0f,1.0f));
+        model = glm::translate(model,glm::vec3(-5.8*cos(currentFrame),2.9f,2.05*sin(currentFrame)));
+        lightingShader.setMat4("model", model);
+        jellyfish.Draw(lightingShader);
+
+        model = glm::mat4(1.0f);
+        model = scale(model,glm::vec3(0.3f));
+        model = glm::translate(model,glm::vec3(5.8*cos(currentFrame),4.9f,2.05*sin(currentFrame)));
+        lightingShader.setMat4("model", model);
+        jellyfish.Draw(lightingShader);
+
+        queenJFShader.use();
+        model = glm::mat4(1.0f);
+        //model = scale(model,glm::vec3(0.3f));
+        model = glm::translate(model,glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0f));
+        queenJFShader.setMat4("model", model);
+        jellyfish.Draw(queenJFShader);
+
 
         // draw skybox as last
         glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
