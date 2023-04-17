@@ -2,16 +2,8 @@
 
 in vec3 FragPos;
 
-//uniform sampler2D t0;
-//uniform sampler2D t1;
-
 layout (location = 0) out vec4 FragColor;
 layout (location = 1) out vec4 BrightColor;
-
-//
-//float rand(vec2 co){
-//    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
-//}
 
 void main() {
     vec3 color = vec3(100.0f, 100.0f, 100.0f);

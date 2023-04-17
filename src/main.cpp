@@ -29,8 +29,8 @@ unsigned int loadTexture(const char *path);
 unsigned int loadCubemap(vector<std::string> faces);
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1024;
+const unsigned int SCR_HEIGHT = 768;
 
 // camera
 
@@ -57,9 +57,7 @@ struct ProgramState {
     glm::vec3 clearColor = glm::vec3(0);
     bool ImGuiEnabled = false;
     Camera camera;
-    bool CameraMouseMovementUpdateEnabled = true;
-    glm::vec3 backpackPosition = glm::vec3(0.0f);
-    float backpackScale = 1.0f;
+    bool CameraMouseMovementUpdateEnabled = false;
     PointLight pointLight;
     ProgramState()
             : camera(glm::vec3(0.0f, 0.0f, 3.0f)) {}
@@ -151,9 +149,6 @@ int main() {
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     (void) io;
-
-
-
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
@@ -555,7 +550,7 @@ void DrawImGui(ProgramState *programState) {
         ImGui::Text("Camera position: (%f, %f, %f)", c.Position.x, c.Position.y, c.Position.z);
         ImGui::Text("(Yaw, Pitch): (%f, %f)", c.Yaw, c.Pitch);
         ImGui::Text("Camera front: (%f, %f, %f)", c.Front.x, c.Front.y, c.Front.z);
-        ImGui::Checkbox("Camera mouse update", &programState->CameraMouseMovementUpdateEnabled);
+        ImGui::Checkbox("Camera mouse update (C)", &programState->CameraMouseMovementUpdateEnabled);
         ImGui::End();
     }
 
@@ -564,15 +559,6 @@ void DrawImGui(ProgramState *programState) {
 }
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
-        programState->ImGuiEnabled = !programState->ImGuiEnabled;
-        //if (programState->ImGuiEnabled) {
-        //    programState->CameraMouseMovementUpdateEnabled = false;
-        //    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        //} else {
-        //    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        //}
-    }
     if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS){
         programState->CameraMouseMovementUpdateEnabled = !programState->CameraMouseMovementUpdateEnabled;
         std::cout << "Camera lock - " << (programState->CameraMouseMovementUpdateEnabled ? "Disabled" : "Enabled") << '\n';
